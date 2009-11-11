@@ -9,11 +9,13 @@ import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
@@ -38,6 +40,8 @@ public class GUI extends Canvas {
         new Color(205, 133, 63), new Color(255, 248, 220)
     };
 
+    private int loc[][] = {{10,10}, {100,100}, {200,200}};
+
     private static GUI getInstance() {
         if (instance == null) {
             instance = new GUI();
@@ -60,7 +64,57 @@ public class GUI extends Canvas {
 
     @Override
     public void paint(Graphics g) {
-        super.paint(g);
+
+        Graphics2D g2d = (Graphics2D) g;
+
+        g2d.setColor(Color.WHITE);
+        g2d.fillRect(0, 0, maxWidth, maxHeight);
+
+        ArrayList area = new ArrayList();
+        ArrayList<Integer> temp = new ArrayList<Integer>();
+
+        if (FileLoader.DistanceMatrix != null) {
+            for (int i = 0; i < FileLoader.DistanceMatrix.length; i++) {
+                for (int j = i; j < FileLoader.DistanceMatrix[i].length; j++) {
+                    if (FileLoader.DistanceMatrix[i][j] == 0) {
+                        temp.add(j);
+                    }
+                }
+                area.add(temp);
+                i += temp.size()-1;
+                temp = new ArrayList<Integer>();
+            }
+            System.out.println(area);
+            int num = 0;
+            Location [] location = new Location [FileLoader.m+FileLoader.n];
+            for (int i = 0; i < area.size(); i++) {
+                temp = (ArrayList<Integer>) area.get(i);
+                for (int j = 0; j < temp.size(); j++) {
+                    g2d.setColor(colors[i]);
+                    g2d.fillOval(loc[i][0]+j*30, loc[i][1], 5, 5);
+                    location[num] = new Location(loc[i][0]+j*30, loc[i][1]);
+                    g2d.drawString(""+num, loc[i][0]+j*30, loc[i][1]);
+                    num++;
+                }
+            }
+
+            for (int i = 0; i < FileLoader.careWorkers.size(); i++) {
+                g2d.setColor(colors[num]);
+                Worker careWorkers = FileLoader.careWorkers.get(i);
+                ArrayList<Service> seqServ = careWorkers.getSequenceOfService();
+                int start = careWorkers.getStartLocation();
+                int curr = seqServ.get(0).getCurrentLocation();
+                g2d.drawLine(location[start].getX(), location[start].getY(), location[curr].getX(), location[curr].getY());
+                for (int j = 1; j < seqServ.size(); j++) {
+                    int previousLocation = seqServ.get(j-1).getCurrentLocation();
+                    int currentLocation = seqServ.get(j).getCurrentLocation();
+
+                    if (currentLocation != -2) {
+                        g2d.drawLine(location[previousLocation].getX(), location[previousLocation].getY(), location[currentLocation].getX(), location[currentLocation].getY());
+                    }
+                }
+            }
+        }
     }
 
     public static String getInputFile() {
@@ -100,5 +154,23 @@ public class GUI extends Canvas {
         menuBar.add(fileMenu);
         f.setMenuBar(menuBar);
         mainFrame.setVisible(true);
+    }
+}
+
+class Location {
+    int x;
+    int y;
+
+    public Location(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
     }
 }
