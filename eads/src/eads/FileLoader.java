@@ -18,17 +18,17 @@ public class FileLoader {
     static boolean initializeDistanceMatrix = false;
 
     public static void main(String[] args) {
-        run(null);
+        run();
     }
 
-    public static boolean run(String loadFile) {
-        String fileName;
+    public static boolean run() {
+        String fileName = GUI.getInputFile();
         
         //40-3-had_d_18.txt
         //30-2-had_d_10.txt
         //20-2-had_d_5.txt
         //10-1-had_d_0.txt
-        fileName = (loadFile == null) ? "data\\20-2-had_d_5.txt" : loadFile;
+        //fileName = (loadFile == null) ? "data\\dataset" : loadFile;
         System.out.println("Read fileName is: " + fileName);
         return parse(fileName);
     }

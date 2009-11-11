@@ -16,8 +16,8 @@ public class Main {
     public static double a2 = 0.1;//Time difference Coefficient
     public static double a3 = 0.1;//Urgency to deliver Coefficient
 
-    public void initialize(String loadFile) {
-        FileLoader.run(loadFile);
+    public void initialize() {
+        FileLoader.run();
     }
 
     public void buildInitialSolution() {
@@ -54,7 +54,8 @@ public class Main {
 
     public static void main(String[] args) {
         Main main = new Main();
-        main.initialize(null);
+        main.initialize();
+        GUI.setup(main);
         main.buildInitialSolution();
         int totalDistance = 0;
         for (int i = 0; i <
