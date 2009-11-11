@@ -50,13 +50,6 @@ public class Main {
                 }
             }// end of all the clients that can be served by the worker
         }
-    }
-
-    public static void main(String[] args) {
-        Main main = new Main();
-        main.initialize();
-        GUI.setup(main);
-        main.buildInitialSolution();
         int totalDistance = 0;
         for (int i = 0; i <
                 FileLoader.m; i++) {
@@ -67,5 +60,24 @@ public class Main {
         }
 
         System.out.println("Total Distance Travelled = " + totalDistance);
+    }
+
+    public static void main(String[] args) {
+        Main main = new Main();
+        main.initialize();
+        GUI.setup(main);
+        main.buildInitialSolution();
+        /*
+        int totalDistance = 0;
+        for (int i = 0; i <
+                FileLoader.m; i++) {
+            Worker tempWorker = FileLoader.careWorkers.get(i);
+            int workerDistanceTravelled = tempWorker.getTotalDistanceTravelled();
+            totalDistance += workerDistanceTravelled;
+            System.out.println(i + " distance= " + workerDistanceTravelled + " " + tempWorker.printServiceSequence());
+        }
+
+        System.out.println("Total Distance Travelled = " + totalDistance);
+        */
     }
 }
