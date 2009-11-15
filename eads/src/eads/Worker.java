@@ -160,16 +160,20 @@ public class Worker {
     }
 
     public int getTotalDistanceTravelled() {
+        int previousLocation = -1;
         if (sequenceOfService.size() > 0) {
             totalDistanceTravelled = 0;
-            int previousLocation = -1;
             for (int i = 0; i < sequenceOfService.size(); i++) {
                 if (sequenceOfService.get(i).getCurrentLocation() != -2) {
                     previousLocation = (previousLocation == -1) ? startLocation : previousLocation;
-                    totalDistanceTravelled += FileLoader.DistanceMatrix[previousLocation][sequenceOfService.get(i).getCurrentLocation()];
+                    totalDistanceTravelled += GlobalVariable.DistanceMatrix[previousLocation][sequenceOfService.get(i).getCurrentLocation()];
                     previousLocation = sequenceOfService.get(i).getCurrentLocation();
                 }
             }
+        }
+        if (previousLocation != -1) {
+            // return back to worker's starting location
+            totalDistanceTravelled += GlobalVariable.DistanceMatrix[previousLocation][startLocation];
         }
         return totalDistanceTravelled;
     }
@@ -194,12 +198,26 @@ public class Worker {
         this.startLocation = startLocation;
         this.sequenceOfService = new ArrayList<Service>();
         this.totalDistanceTravelled = 0;
-        this.hasTakenBreak =false;
+        this.hasTakenBreak = false;
         this.currentLocation = this.startLocation;
     }
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+
+    public Worker(Worker clone) {
+        this.skillNumber = clone.skillNumber;
+        this.workStartTime = clone.workStartTime;
+        this.workEndTime = clone.workEndTime;
+        this.earliestBreakTime = clone.earliestBreakTime;
+        this.latestBreakTime = clone.latestBreakTime;
+        this.breakDuration = clone.breakDuration;
+        this.startLocation = clone.startLocation;
+        this.sequenceOfService = new ArrayList<Service>();
+        this.totalDistanceTravelled = 0;
+        this.hasTakenBreak = false;
+        this.currentLocation = clone.startLocation;
+    }
 
     @Override
     public String toString() {
@@ -210,38 +228,69 @@ public class Worker {
     }
 
     public boolean isViolateConstraintIfServiceAddedAtEnd(Service service) {
-        int distance = FileLoader.DistanceMatrix[currentLocation][service.getCurrentLocation()];
-        int realStartTime = Math.max(currentTime,service.getEarliestStartTime());
-        // if there is mismatch of skills
-        if (skillNumber != service.getRequiredSkill()) {
+        int distance = GlobalVariable.DistanceMatrix[currentLocation][service.getCurrentLocation()];
+        int arrivalTime = currentTime + distance;
+        int realStartTime = Math.max(arrivalTime, service.getEarliestStartTime()); // choose earlieststarttime if the currentTime + distance is less
+        int completionTime = arrivalTime + service.getDuration();
+        int breakTime = (arrivalTime < earliestBreakTime) ? earliestBreakTime : currentTime + distance;
+        int completionTimeWithBreak = breakTime + breakDuration + service.getDuration();
+
+        // if the worker can reach on time before the latest service time
+        if (realStartTime > service.getLatestStartTime()) {
             return true;
-        } // if the worker can finish the service before his latestBreakTime
-        else if ( realStartTime+ distance + service.getDuration() > latestBreakTime && !hasTakenBreak) {
-            return true;
-        } // if the worker can reach on time before the latest service time
-        else if (realStartTime + distance > service.getLatestStartTime()) {
-            return true;
-        } // if the service is out of the worker work time
-        else if (realStartTime + distance + service.getDuration() > workEndTime) {
-            return true;
-        } // if nothing wrong 
-        else {
-            return false;
         }
+
+        // if the service is out of the worker work time
+        if (completionTime > workEndTime) {
+            return true;
+        }
+
+        // if the worker can finish the service before his latestBreakTime
+        if (!hasTakenBreak) {
+            if (completionTime > latestBreakTime) {
+                // if the worker can grab a break before the next service
+                if (service.getLatestStartTime() > completionTimeWithBreak) {
+                    //if (service.getEarliestStartTime() - breakTime >= breakDuration && !hasTakenBreak) {
+                    return true;
+                }
+            }
+        }
+
+        // if service start time is too early for the worker
+        if (realStartTime < workStartTime) {
+            return true;
+        }
+
+        // if nothing wrong
+        return false;
     }
 
     public void addService(Service newService) {
         if (newService.getCurrentLocation() != -2) {
+            int distance = GlobalVariable.DistanceMatrix[newService.getCurrentLocation()][currentLocation];
+            int arrivalTime = currentTime + distance;
+            int completionTime = arrivalTime + newService.getDuration();
+            int breakTime = (arrivalTime < earliestBreakTime) ? earliestBreakTime : currentTime + distance;
+            int completionTimeWithBreak = breakTime + breakDuration + newService.getDuration();
+
+            // add a break if there can be a delay from currenttime + distance travel > breakDuration
+            // after the earliest break time and have yet to take a break.
+            if (newService.getLatestStartTime() > completionTimeWithBreak && !hasTakenBreak) {
+                //if (newService.getEarliestStartTime() - breakTime >= breakDuration && !hasTakenBreak) 
+                currentTime += breakDuration;
+                hasTakenBreak = true;
+                arrivalTime = currentTime + distance;
+                completionTime = arrivalTime + newService.getDuration();
+                sequenceOfService.add(new Break());
+            }
+
             sequenceOfService.add(newService);
-            newService.setServiced(true);
-            int distance = FileLoader.DistanceMatrix[newService.getCurrentLocation()][currentLocation];
-            currentTime = ((currentTime + distance) > newService.getEarliestStartTime())?
-                currentTime + distance + newService.getDuration(): newService.getEarliestStartTime() + newService.getDuration();
+            currentTime = (arrivalTime > newService.getEarliestStartTime()) ? completionTime : newService.getEarliestStartTime() + newService.getDuration();
             currentLocation = newService.getCurrentLocation();
-        } else { // the service is to take a break
-            currentTime = (currentTime < earliestBreakTime)? earliestBreakTime: currentTime;
+        } else if(!hasTakenBreak) { // the service is to take a break
+            currentTime = (currentTime < earliestBreakTime) ? earliestBreakTime : currentTime;
             currentTime += breakDuration;
-            hasTakenBreak =true;
+            hasTakenBreak = true;
             sequenceOfService.add(newService);
         }
     }
@@ -250,25 +299,19 @@ public class Worker {
         String sequence = String.valueOf(startLocation);
         for (int i = 0; i < sequenceOfService.size(); i++) {
             int tempLocation = sequenceOfService.get(i).getCurrentLocation();
-            sequence += (tempLocation != -2)? " -> " + tempLocation : " -> break" ;
+            sequence += (tempLocation != -2) ? " -> " + tempLocation : " -> break";
         }
-        return sequence;
+        return sequence + " ( " + sequenceOfService.size() + " )";
     }
 
-    public double computeDistanceCost(double distCoefficient, double timeDiffCoefficient,
-            double urgencyCoefficient, Service service){
-
-        //visited.get(visited.size()-1)
-        double travelTime = FileLoader.DistanceMatrix[service.getCurrentLocation()][currentLocation];
-
-        //time unit difference between earliest service time and now
-        double Tij = Math.max(currentTime + travelTime, service.getEarliestStartTime()) - currentTime;
-
-        //time unit difference between window end time and service time
-        double Vij = service.getLatestStartTime() - currentTime - travelTime;
-        double cost = distCoefficient * travelTime+
-                timeDiffCoefficient * Tij +
-                urgencyCoefficient * Vij;
-        return cost;
+    public int countService() {
+        int count = 0;
+        for (int i = 0; i < sequenceOfService.size(); i++) {
+            int tempLocation = sequenceOfService.get(i).getCurrentLocation();
+            if (tempLocation != -2) {
+                count++;
+            }
+        }
+        return count;
     }
 }
