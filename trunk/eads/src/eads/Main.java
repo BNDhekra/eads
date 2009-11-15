@@ -331,7 +331,7 @@ public class Main {
         Main main = new Main();
 
         main.initialize(null);
-        //GUI.setup(main); //for GUI enable this
+        GUI.setup(main); //for GUI enable this
 
         main.computeSolutions();
     }

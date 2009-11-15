@@ -31,8 +31,8 @@ public class FileLoader {
             //20-2-had_d_5.txt
             //10-1-had_d_0.txt
 
-        //String fileName = GUI.getInputFile(); // for GUI enable this and comment below
-        String fileName = (loadFile == null) ? "data\\40-3-had_d_18.txt" : loadFile;
+        String fileName = GUI.getInputFile(); // for GUI enable this and comment below
+//        String fileName = (loadFile == null) ? "data\\40-3-had_d_18.txt" : loadFile;
         System.out.println("Read fileName is: " + fileName);
         return parse(fileName);
     }
