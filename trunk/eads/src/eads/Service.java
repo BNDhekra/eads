@@ -7,7 +7,6 @@ public class Service {
     private int duration;
     private int requiredSkill;
     private int currentLocation;
-    private boolean serviced = false;
 
     /**
      * @return the earliestStartTime
@@ -78,21 +77,7 @@ public class Service {
     public int getCurrentLocation() {
         return currentLocation;
     }
-
-    /**
-     * @param serviced the serviced to set
-     */
-    public void setServiced(boolean serviced) {
-        this.serviced = serviced;
-    }
-
-    /**
-     * @return the serviced status
-     */
-    public boolean isServiced() {
-        return serviced;
-    }
-
+    
     /**
      * @param earliestStartTime
      * @param latestStartTime
@@ -112,12 +97,22 @@ public class Service {
      * @see java.lang.Object#toString()
      */
 
+    public Service(Service clone){
+        this.earliestStartTime = clone.earliestStartTime;
+        this.latestStartTime = clone.latestStartTime;
+        this.duration = clone.duration;
+        this.requiredSkill = clone.requiredSkill;
+        this.currentLocation = clone.currentLocation;
+    }
+
     @Override
     public String toString() {
-        return "Service [earliestStartTime=" + earliestStartTime +
-                ", latestStartTime=" + latestStartTime +
+        return "Service [" +
+                " location=" + currentLocation +
+                ", earliest=" + earliestStartTime +
+                ", latest=" + latestStartTime +
                 ", duration=" + duration +
-                ", requiredSkill=" + requiredSkill +
-                ", currentLocation=" + currentLocation + "]";
+                ", skill=" + requiredSkill +
+                " ]";
     }
 }
