@@ -73,10 +73,10 @@ public class GUI extends Canvas {
         ArrayList area = new ArrayList();
         ArrayList<Integer> temp = new ArrayList<Integer>();
 
-        if (FileLoader.DistanceMatrix != null) {
-            for (int i = 0; i < FileLoader.DistanceMatrix.length; i++) {
-                for (int j = i; j < FileLoader.DistanceMatrix[i].length; j++) {
-                    if (FileLoader.DistanceMatrix[i][j] == 0) {
+        if (GlobalVariable.DistanceMatrix != null) {
+            for (int i = 0; i < GlobalVariable.DistanceMatrix.length; i++) {
+                for (int j = i; j < GlobalVariable.DistanceMatrix[i].length; j++) {
+                    if (GlobalVariable.DistanceMatrix[i][j] == 0) {
                         temp.add(j);
                     }
                 }
@@ -86,7 +86,7 @@ public class GUI extends Canvas {
             }
             System.out.println(area);
             int num = 0;
-            Location [] location = new Location [FileLoader.m+FileLoader.n];
+            Location [] location = new Location [GlobalVariable.m+GlobalVariable.n];
             for (int i = 0; i < area.size(); i++) {
                 temp = (ArrayList<Integer>) area.get(i);
                 for (int j = 0; j < temp.size(); j++) {
@@ -98,19 +98,22 @@ public class GUI extends Canvas {
                 }
             }
 
-            for (int i = 0; i < FileLoader.careWorkers.size(); i++) {
+            for (int i = 0; i < GlobalVariable.careWorkers.size(); i++) {
                 g2d.setColor(colors[num]);
-                Worker careWorkers = FileLoader.careWorkers.get(i);
-                ArrayList<Service> seqServ = careWorkers.getSequenceOfService();
-                int start = careWorkers.getStartLocation();
-                int curr = seqServ.get(0).getCurrentLocation();
-                g2d.drawLine(location[start].getX(), location[start].getY(), location[curr].getX(), location[curr].getY());
-                for (int j = 1; j < seqServ.size(); j++) {
-                    int previousLocation = seqServ.get(j-1).getCurrentLocation();
-                    int currentLocation = seqServ.get(j).getCurrentLocation();
+                ArrayList<Worker> careWorkersList = GlobalVariable.careWorkers.get(i);
+                for (int k = 0; k < careWorkersList.size(); k++) {
+                    Worker careWorkers = careWorkersList.get(k);
+                    ArrayList<Service> seqServ = careWorkers.getSequenceOfService();
+                    int start = careWorkers.getStartLocation();
+                    int curr = seqServ.get(0).getCurrentLocation();
+                    g2d.drawLine(location[start].getX(), location[start].getY(), location[curr].getX(), location[curr].getY());
+                    for (int j = 1; j < seqServ.size(); j++) {
+                        int previousLocation = seqServ.get(j-1).getCurrentLocation();
+                        int currentLocation = seqServ.get(j).getCurrentLocation();
 
-                    if (currentLocation != -2) {
-                        g2d.drawLine(location[previousLocation].getX(), location[previousLocation].getY(), location[currentLocation].getX(), location[currentLocation].getY());
+                        if (currentLocation != -2) {
+                            g2d.drawLine(location[previousLocation].getX(), location[previousLocation].getY(), location[currentLocation].getX(), location[currentLocation].getY());
+                        }
                     }
                 }
             }
@@ -137,7 +140,7 @@ public class GUI extends Canvas {
 
             public void actionPerformed(ActionEvent e) {
                 System.out.println("*****************************************");
-                m.initialize();
+                m.initialize(null);
             }
         });
 
@@ -145,7 +148,8 @@ public class GUI extends Canvas {
         runSolution.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                m.buildInitialSolution();
+                //m.buildInitialSolution();
+                m.computeSolutions();
             }
         });
 
